@@ -15,6 +15,14 @@
     <p>Track how deeply you focus — study or code</p>
   </div>
 
+  <!-- Tabs -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="timer">Timer</button>
+    <button class="tab-btn" data-tab="profile">Profile</button>
+  </div>
+
+  <div class="tab-panel active" id="tabTimer">
+
   <!-- TIMER CARD -->
   <div class="timer-card">
 
@@ -130,6 +138,75 @@
       <div class="empty">No sessions yet — start your first one!</div>
     </div>
   </div>
+
+  </div><!-- /tabTimer -->
+
+  <div class="tab-panel" id="tabProfile">
+
+  <!-- Student Profile -->
+  <div class="profile-card">
+    <div class="profile-title">Student Profile</div>
+    <div class="profile-grid">
+      <div class="profile-field">
+        <label class="profile-label" for="studentName">Name</label>
+        <input class="profile-input" id="studentName" placeholder="Student name" maxlength="40"/>
+      </div>
+      <div class="profile-field">
+        <label class="profile-label" for="studentClass">Class/Grade</label>
+        <input class="profile-input" id="studentClass" placeholder="e.g. Grade 9" maxlength="20"/>
+      </div>
+      <div class="profile-field">
+        <label class="profile-label" for="studentAge">Age</label>
+        <input class="profile-input" id="studentAge" type="number" min="1" max="120" placeholder="e.g. 16"/>
+      </div>
+      <div class="profile-field">
+        <label class="profile-label" for="studentSubjects">Subjects</label>
+        <input class="profile-input" id="studentSubjects" placeholder="Comma separated subjects" maxlength="120"/>
+      </div>
+      <div class="profile-field">
+        <label class="profile-label" for="targetDaily">Target (min/day)</label>
+        <input class="profile-input" id="targetDaily" type="number" min="0" max="1440" placeholder="e.g. 120"/>
+      </div>
+      <div class="profile-field">
+        <label class="profile-label" for="targetWeekly">Target (min/week)</label>
+        <input class="profile-input" id="targetWeekly" type="number" min="0" max="10080" placeholder="e.g. 600"/>
+      </div>
+    </div>
+    <div class="profile-actions">
+      <button class="btn btn-save" id="saveProfileBtn">Save Profile</button>
+      <div class="profile-status" id="profileStatus">Not saved yet</div>
+    </div>
+  </div>
+
+  <!-- Student Analysis -->
+  <div class="analysis-card">
+    <div class="analysis-title">Student Analysis</div>
+    <div class="analysis-sub" id="analysisStudent">Add a profile to see analysis</div>
+    <div class="analysis-grid">
+      <div class="analysis-box">
+        <div class="analysis-label">Last Session</div>
+        <div class="analysis-value" id="analysisLast">—</div>
+      </div>
+      <div class="analysis-box">
+        <div class="analysis-label">Average Score</div>
+        <div class="analysis-value" id="analysisAvg">—</div>
+      </div>
+      <div class="analysis-box">
+        <div class="analysis-label">Focused</div>
+        <div class="analysis-value" id="analysisFocused">0</div>
+      </div>
+      <div class="analysis-box">
+        <div class="analysis-label">Distracted</div>
+        <div class="analysis-value" id="analysisDistracted">0</div>
+      </div>
+      <div class="analysis-box">
+        <div class="analysis-label">Unfocused</div>
+        <div class="analysis-value" id="analysisUnfocused">0</div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /tabProfile -->
 
 </div><!-- /container -->
 <script src="app.js"></script>

@@ -20,6 +20,21 @@ let totalMinsAll = 0;
 let codeMinsAll  = 0;
 let streak       = 0;
 let bestStreak   = 0;
+let activeTab    = 'timer';
+
+const FOCUS_THRESHOLDS = {
+  focused: 80,
+  distracted: 50
+};
+
+let studentProfile = {
+  name: '',
+  classGrade: '',
+  age: '',
+  subjects: [],
+  targetDaily: '',
+  targetWeekly: ''
+};
 
 let tabBlurCount   = 0;
 let vsCodeSwitches = 0;
@@ -58,10 +73,20 @@ function bindUi() {
   if (startBtn) startBtn.addEventListener('click', toggleTimer);
 
   const resetBtn = document.getElementById('resetBtn');
-  if (resetBtn) resetBtn.addEventListener('click', resetTimer);
+  if (resetBtn) resetBtn.addEventListener('click', () => resetTimer({ logIncomplete: true }));
 
   const endBtn = document.getElementById('endBtn');
   if (endBtn) endBtn.addEventListener('click', () => endSession(false));
+
+  const saveProfileBtn = document.getElementById('saveProfileBtn');
+  if (saveProfileBtn) saveProfileBtn.addEventListener('click', saveProfile);
+
+  document.querySelectorAll('.tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab || 'timer';
+      setActiveTab(tab);
+    });
+  });
 
   document.querySelectorAll('.pill').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -69,6 +94,18 @@ function bindUi() {
       const coding = btn.dataset.coding === 'true';
       setMode(btn, min, coding);
     });
+  });
+}
+
+function setActiveTab(tabName) {
+  activeTab = tabName;
+
+  document.querySelectorAll('.tab-btn').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.tab === tabName);
+  });
+
+  document.querySelectorAll('.tab-panel').forEach((panel) => {
+    panel.classList.toggle('active', panel.id === 'tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
   });
 }
 
@@ -100,8 +137,15 @@ function setArc(ratio) {
 /* ============================================================
    RESET TIMER
    ============================================================ */
-function resetTimer() {
+function resetTimer(options = {}) {
+  const { logIncomplete = false } = options;
+
   clearInterval(timerInt);
+
+  if (logIncomplete && elapsed >= 8) {
+    recordSession(false);
+  }
+
   running        = false;
   elapsed        = 0;
   tabBlurCount   = 0;
@@ -251,33 +295,7 @@ function endSession(completed = false) {
   clearInterval(timerInt);
   running = false;
 
-  const score   = calcScore(completed);
-  const subject = document.getElementById('subjectInput').value.trim()
-                  || (isCoding ? 'Coding' : 'Study');
-  const mins    = Math.round(elapsed / 60);
-
-  // Save session record
-  sessions.unshift({
-    subject,
-    mins,
-    score,
-    completed,
-    coding:    isCoding,
-    vsSwitches: vsCodeSwitches,
-    blurs:     tabBlurCount,
-    time:      new Date()
-  });
-
-  // Accumulate totals
-  totalMinsAll += mins;
-  if (isCoding) codeMinsAll += mins;
-  streak++;
-  if (streak > bestStreak) bestStreak = streak;
-
-  // Update UI
-  updateStats();
-  renderLog();
-  updateFocusDisplay(score);
+  recordSession(completed);
 
   // Reset internal counters
   elapsed        = 0;
@@ -296,6 +314,39 @@ function endSession(completed = false) {
   setArc(completed ? 0 : 1);
 
   bgMsg({ type: 'SESSION_STOP' });
+}
+
+/* ============================================================
+   RECORD SESSION
+   ============================================================ */
+function recordSession(completed) {
+  const score   = calcScore(completed);
+  const focus   = focusLabelForScore(score);
+  const subject = document.getElementById('subjectInput').value.trim()
+                  || (isCoding ? 'Coding' : 'Study');
+  const mins    = Math.round(elapsed / 60);
+
+  sessions.unshift({
+    subject,
+    mins,
+    score,
+    focusLabel: focus.label,
+    completed,
+    coding:     isCoding,
+    vsSwitches: vsCodeSwitches,
+    blurs:      tabBlurCount,
+    time:       Date.now()
+  });
+
+  totalMinsAll += mins;
+  if (isCoding) codeMinsAll += mins;
+  streak++;
+  if (streak > bestStreak) bestStreak = streak;
+
+  updateStats();
+  renderLog();
+  updateFocusDisplay(score);
+  updateAnalysisPanel();
   saveToStorage();
 }
 
@@ -341,17 +392,11 @@ function renderLog() {
   }
 
   list.innerHTML = sessions.slice(0, 10).map(s => {
-    const col  = s.score >= 85 ? '#14b8a6'
-           : s.score >= 65 ? '#22d3ee'
-               : s.score >= 45 ? '#fbbf24'
-               : '#f87171';
+    const focus = focusLabelForScore(s.score);
+    const col  = focus.color;
 
-    const tag  = s.score >= 85 ? 'excellent'
-               : s.score >= 65 ? 'good'
-               : s.score >= 45 ? 'ok'
-               : 'low';
-
-    const time = s.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeObj = new Date(s.time || Date.now());
+    const time = timeObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     const codeTag  = s.coding
       ? '<span class="tag-vs">VS Code</span>'
@@ -372,7 +417,7 @@ function renderLog() {
           <div class="log-sub">${s.subject} ${codeTag}</div>
           <div class="log-meta">
             ${time}${vsInfo}${blurInfo}
-            · <span style="color:${col};font-weight:600">${tag}</span>
+            · <span style="color:${col};font-weight:600">${focus.label}</span>
           </div>
         </div>
         <div class="log-dur" style="color:${col}">
@@ -382,6 +427,136 @@ function renderLog() {
         </div>
       </div>`;
   }).join('');
+}
+
+/* ============================================================
+   STUDENT PROFILE + ANALYSIS
+   ============================================================ */
+function normalizeSubjects(raw) {
+  if (!raw) return [];
+  return raw
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
+function focusLabelForScore(score) {
+  if (score >= FOCUS_THRESHOLDS.focused) {
+    return { label: 'Focused', color: '#14b8a6' };
+  }
+  if (score >= FOCUS_THRESHOLDS.distracted) {
+    return { label: 'Distracted', color: '#fbbf24' };
+  }
+  return { label: 'Unfocused', color: '#f87171' };
+}
+
+function renderProfile() {
+  const nameEl = document.getElementById('studentName');
+  const classEl = document.getElementById('studentClass');
+  const ageEl = document.getElementById('studentAge');
+  const subjectsEl = document.getElementById('studentSubjects');
+  const dailyEl = document.getElementById('targetDaily');
+  const weeklyEl = document.getElementById('targetWeekly');
+  const statusEl = document.getElementById('profileStatus');
+
+  if (nameEl) nameEl.value = studentProfile.name || '';
+  if (classEl) classEl.value = studentProfile.classGrade || '';
+  if (ageEl) ageEl.value = studentProfile.age || '';
+  if (subjectsEl) subjectsEl.value = (studentProfile.subjects || []).join(', ');
+  if (dailyEl) dailyEl.value = studentProfile.targetDaily || '';
+  if (weeklyEl) weeklyEl.value = studentProfile.targetWeekly || '';
+
+  if (statusEl) {
+    const subjects = Array.isArray(studentProfile.subjects) ? studentProfile.subjects : [];
+    const hasProfile = studentProfile.name || studentProfile.classGrade || subjects.length;
+    statusEl.textContent = hasProfile ? 'Profile loaded' : 'Not saved yet';
+    statusEl.style.color = hasProfile ? '#22d3ee' : '';
+  }
+}
+
+function saveProfile() {
+  const nameEl = document.getElementById('studentName');
+  const classEl = document.getElementById('studentClass');
+  const ageEl = document.getElementById('studentAge');
+  const subjectsEl = document.getElementById('studentSubjects');
+  const dailyEl = document.getElementById('targetDaily');
+  const weeklyEl = document.getElementById('targetWeekly');
+  const statusEl = document.getElementById('profileStatus');
+
+  studentProfile = {
+    name: nameEl ? nameEl.value.trim() : '',
+    classGrade: classEl ? classEl.value.trim() : '',
+    age: ageEl ? ageEl.value.trim() : '',
+    subjects: subjectsEl ? normalizeSubjects(subjectsEl.value) : [],
+    targetDaily: dailyEl ? dailyEl.value.trim() : '',
+    targetWeekly: weeklyEl ? weeklyEl.value.trim() : ''
+  };
+
+  saveToStorage();
+  updateAnalysisPanel();
+
+  if (statusEl) {
+    statusEl.textContent = 'Profile saved';
+    statusEl.style.color = '#34d399';
+  }
+}
+
+function updateAnalysisPanel() {
+  const studentEl = document.getElementById('analysisStudent');
+  const lastEl = document.getElementById('analysisLast');
+  const avgEl = document.getElementById('analysisAvg');
+  const focusedEl = document.getElementById('analysisFocused');
+  const distractedEl = document.getElementById('analysisDistracted');
+  const unfocusedEl = document.getElementById('analysisUnfocused');
+
+  if (studentEl) {
+    if (studentProfile.name || studentProfile.classGrade) {
+      const detail = [studentProfile.name, studentProfile.classGrade].filter(Boolean).join(' · ');
+      studentEl.textContent = detail;
+    } else {
+      studentEl.textContent = 'Add a profile to see analysis';
+    }
+  }
+
+  if (!sessions.length) {
+    if (lastEl) lastEl.textContent = '—';
+    if (avgEl) avgEl.textContent = '—';
+    if (focusedEl) focusedEl.textContent = '0';
+    if (distractedEl) distractedEl.textContent = '0';
+    if (unfocusedEl) unfocusedEl.textContent = '0';
+    return;
+  }
+
+  const totalScore = sessions.reduce((sum, s) => sum + (s.score || 0), 0);
+  const avgScore = Math.round(totalScore / sessions.length);
+  const lastScore = sessions[0].score || 0;
+
+  const lastLabel = focusLabelForScore(lastScore);
+  const avgLabel = focusLabelForScore(avgScore);
+
+  if (lastEl) {
+    lastEl.textContent = `${lastLabel.label} (${lastScore})`;
+    lastEl.style.color = lastLabel.color;
+  }
+  if (avgEl) {
+    avgEl.textContent = `${avgScore} (${avgLabel.label})`;
+    avgEl.style.color = avgLabel.color;
+  }
+
+  let focusedCount = 0;
+  let distractedCount = 0;
+  let unfocusedCount = 0;
+
+  sessions.forEach((s) => {
+    const label = focusLabelForScore(s.score || 0).label;
+    if (label === 'Focused') focusedCount++;
+    else if (label === 'Distracted') distractedCount++;
+    else unfocusedCount++;
+  });
+
+  if (focusedEl) focusedEl.textContent = String(focusedCount);
+  if (distractedEl) distractedEl.textContent = String(distractedCount);
+  if (unfocusedEl) unfocusedEl.textContent = String(unfocusedCount);
 }
 
 /* ============================================================
@@ -402,7 +577,8 @@ function saveToStorage() {
       sessions:     sessions,
       totalMinsAll: totalMinsAll,
       codeMinsAll:  codeMinsAll,
-      bestStreak:   bestStreak
+      bestStreak:   bestStreak,
+      studentProfile: studentProfile
     });
   }
 }
@@ -411,14 +587,28 @@ function saveToStorage() {
 function loadFromStorage() {
   if (typeof chrome !== 'undefined' && chrome.storage) {
     chrome.storage.local.get(
-      ['sessions', 'totalMinsAll', 'codeMinsAll', 'bestStreak'],
+      ['sessions', 'totalMinsAll', 'codeMinsAll', 'bestStreak', 'studentProfile'],
       (data) => {
-        if (data.sessions)     sessions     = data.sessions;
+        if (Array.isArray(data.sessions)) {
+          sessions = data.sessions.map((s) => ({
+            ...s,
+            time: s.time ? new Date(s.time).getTime() : Date.now()
+          }));
+        }
         if (data.totalMinsAll) totalMinsAll = data.totalMinsAll;
         if (data.codeMinsAll)  codeMinsAll  = data.codeMinsAll;
         if (data.bestStreak)   bestStreak   = data.bestStreak;
+        if (data.studentProfile) {
+          studentProfile = {
+            ...studentProfile,
+            ...data.studentProfile,
+            subjects: Array.isArray(data.studentProfile.subjects) ? data.studentProfile.subjects : []
+          };
+        }
         updateStats();
         renderLog();
+        renderProfile();
+        updateAnalysisPanel();
       }
     );
   }
@@ -441,3 +631,6 @@ setInterval(() => {
 bindUi();
 loadFromStorage();
 resetTimer();
+renderProfile();
+updateAnalysisPanel();
+setActiveTab('timer');
