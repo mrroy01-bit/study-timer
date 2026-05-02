@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Study Focus Timer</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>Study Focus Timer</h1>
+    <p>Track how deeply you focus — study or code</p>
+  </div>
+
+  <!-- TIMER CARD -->
+  <div class="timer-card">
+
+    <!-- Subject Input -->
+    <div class="subject-wrap">
+      <input class="subject-input" id="subjectInput"
+        placeholder="What are you studying? (e.g. Maths, Python, History...)"
+        maxlength="50"/>
+    </div>
+
+    <!-- Study Mode Pills -->
+    <div class="mode-section">
+      <span class="mode-label">Study mode</span>
+      <div class="mode-pills">
+        <button class="pill active"    onclick="setMode(this, 25,  false)">Pomodoro 25m</button>
+        <button class="pill"           onclick="setMode(this, 45,  false)">Deep 45m</button>
+        <button class="pill"           onclick="setMode(this, 60,  false)">1 Hour</button>
+        <button class="pill"           onclick="setMode(this, 120, false)">2 Hours</button>
+        <button class="pill"           onclick="setMode(this, 0,   false)">Free</button>
+      </div>
+    </div>
+
+    <!-- Coding Mode Pills -->
+    <div class="mode-section">
+      <span class="mode-label">Coding mode (VS Code friendly)</span>
+      <div class="mode-pills">
+        <button class="pill code-pill" onclick="setMode(this, 60,  true)">Code 1h</button>
+        <button class="pill code-pill" onclick="setMode(this, 120, true)">Code 2h</button>
+        <button class="pill code-pill" onclick="setMode(this, 0,   true)">Code Free</button>
+      </div>
+    </div>
+
+    <!-- Clock -->
+    <div class="clock-area">
+      <svg class="clock-svg" width="210" height="210" viewBox="0 0 210 210">
+        <circle class="arc-bg"   cx="105" cy="105" r="92"/>
+        <circle class="arc-fill" cx="105" cy="105" r="92" id="arcFill"
+          stroke="#7c6ff7"
+          stroke-dasharray="578.05"
+          stroke-dashoffset="0"/>
+      </svg>
+      <div class="clock-center">
+        <div class="time-big"    id="timeDisplay">25:00</div>
+        <div class="time-status" id="timeStatus">ready</div>
+        <div class="vs-pill"     id="vsPill">VS Code</div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button class="btn btn-start" id="startBtn" onclick="toggleTimer()">Start</button>
+      <button class="btn btn-reset"               onclick="resetTimer()">Reset</button>
+      <button class="btn btn-end"   id="endBtn"   onclick="endSession(false)">End Session</button>
+    </div>
+
+  </div><!-- /timer-card -->
+
+  <!-- VS Code Alert -->
+  <div class="vs-alert" id="vsAlert">
+    <div class="vs-icon">VS</div>
+    <div class="vs-text">
+      <strong>VS Code switch detected!</strong><br>
+      You left the browser — great, keep coding! This won't hurt your focus score.
+    </div>
+  </div>
+
+  <!-- Coding Tip -->
+  <div class="coding-tip" id="codingTip">
+    <b>Coding mode active:</b> Switching to VS Code is
+    <span class="allowed-text">allowed</span>
+    and won't lower your score. Only random distractions (social media, YouTube) count against you.
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-val purple" id="statSessions">0</div>
+      <div class="stat-lbl">Sessions</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val teal" id="statTotal">0m</div>
+      <div class="stat-lbl">Total</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val orange" id="statCode">0m</div>
+      <div class="stat-lbl">Coding</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val amber" id="statStreak">0</div>
+      <div class="stat-lbl">Streak</div>
+    </div>
+  </div>
+
+  <!-- Focus Score -->
+  <div class="focus-card">
+    <div class="focus-header">
+      <span class="focus-title">Focus Score</span>
+      <div>
+        <span class="focus-num" id="focusNum">—</span>
+        <span class="focus-denom">/100</span>
+      </div>
+    </div>
+    <div class="bar-track">
+      <div class="bar-fill" id="focusBar"></div>
+    </div>
+    <div class="focus-hint" id="focusHint">Complete a session to see your focus score</div>
+  </div>
+
+  <!-- Session Log -->
+  <div class="log-card">
+    <div class="log-title">Session Log</div>
+    <div id="logList">
+      <div class="empty">No sessions yet — start your first one!</div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+<script src="app.js"></script>
+</body>
+</html>
