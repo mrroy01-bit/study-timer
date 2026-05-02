@@ -29,11 +29,11 @@
     <div class="mode-section">
       <span class="mode-label">Study mode</span>
       <div class="mode-pills">
-        <button class="pill active"    onclick="setMode(this, 25,  false)">Pomodoro 25m</button>
-        <button class="pill"           onclick="setMode(this, 45,  false)">Deep 45m</button>
-        <button class="pill"           onclick="setMode(this, 60,  false)">1 Hour</button>
-        <button class="pill"           onclick="setMode(this, 120, false)">2 Hours</button>
-        <button class="pill"           onclick="setMode(this, 0,   false)">Free</button>
+        <button class="pill active" data-min="25"  data-coding="false">Pomodoro 25m</button>
+        <button class="pill"        data-min="45"  data-coding="false">Deep 45m</button>
+        <button class="pill"        data-min="60"  data-coding="false">1 Hour</button>
+        <button class="pill"        data-min="120" data-coding="false">2 Hours</button>
+        <button class="pill"        data-min="0"   data-coding="false">Free</button>
       </div>
     </div>
 
@@ -41,9 +41,9 @@
     <div class="mode-section">
       <span class="mode-label">Coding mode (VS Code friendly)</span>
       <div class="mode-pills">
-        <button class="pill code-pill" onclick="setMode(this, 60,  true)">Code 1h</button>
-        <button class="pill code-pill" onclick="setMode(this, 120, true)">Code 2h</button>
-        <button class="pill code-pill" onclick="setMode(this, 0,   true)">Code Free</button>
+        <button class="pill code-pill" data-min="60"  data-coding="true">Code 1h</button>
+        <button class="pill code-pill" data-min="120" data-coding="true">Code 2h</button>
+        <button class="pill code-pill" data-min="0"   data-coding="true">Code Free</button>
       </div>
     </div>
 
@@ -52,7 +52,7 @@
       <svg class="clock-svg" width="210" height="210" viewBox="0 0 210 210">
         <circle class="arc-bg"   cx="105" cy="105" r="92"/>
         <circle class="arc-fill" cx="105" cy="105" r="92" id="arcFill"
-          stroke="#7c6ff7"
+          stroke="#14b8a6"
           stroke-dasharray="578.05"
           stroke-dashoffset="0"/>
       </svg>
@@ -65,9 +65,9 @@
 
     <!-- Controls -->
     <div class="controls">
-      <button class="btn btn-start" id="startBtn" onclick="toggleTimer()">Start</button>
-      <button class="btn btn-reset"               onclick="resetTimer()">Reset</button>
-      <button class="btn btn-end"   id="endBtn"   onclick="endSession(false)">End Session</button>
+      <button class="btn btn-start" id="startBtn">Start</button>
+      <button class="btn btn-reset" id="resetBtn">Reset</button>
+      <button class="btn btn-end"   id="endBtn">End Session</button>
     </div>
 
   </div><!-- /timer-card -->
@@ -91,7 +91,7 @@
   <!-- Stats -->
   <div class="stats-row">
     <div class="stat-box">
-      <div class="stat-val purple" id="statSessions">0</div>
+      <div class="stat-val accent" id="statSessions">0</div>
       <div class="stat-lbl">Sessions</div>
     </div>
     <div class="stat-box">

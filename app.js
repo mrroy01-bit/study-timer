@@ -51,6 +51,28 @@ function setMode(btn, min, coding) {
 }
 
 /* ============================================================
+   UI BINDINGS (MV3 CSP safe)
+   ============================================================ */
+function bindUi() {
+  const startBtn = document.getElementById('startBtn');
+  if (startBtn) startBtn.addEventListener('click', toggleTimer);
+
+  const resetBtn = document.getElementById('resetBtn');
+  if (resetBtn) resetBtn.addEventListener('click', resetTimer);
+
+  const endBtn = document.getElementById('endBtn');
+  if (endBtn) endBtn.addEventListener('click', () => endSession(false));
+
+  document.querySelectorAll('.pill').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const min = Number(btn.dataset.min || 0);
+      const coding = btn.dataset.coding === 'true';
+      setMode(btn, min, coding);
+    });
+  });
+}
+
+/* ============================================================
    TIME FORMATTING
    ============================================================ */
 function fmt(secs) {
@@ -94,15 +116,18 @@ function resetTimer() {
   document.getElementById('endBtn').style.display    = 'none';
   document.getElementById('vsAlert').style.display   = 'none';
   document.getElementById('vsPill').style.display    = 'none';
-  document.getElementById('arcFill').style.stroke    = isCoding ? '#fb923c' : '#7c6ff7';
+  document.getElementById('arcFill').style.stroke    = isCoding ? '#fb923c' : '#14b8a6';
 
   setArc(freeMode ? 0 : 1);
+
+  bgMsg({ type: 'SESSION_STOP' });
 }
 
 /* ============================================================
    START / PAUSE TOGGLE
    ============================================================ */
 function toggleTimer() {
+  const wasRunning = running;
   if (running) {
     // Pause
     running = false;
@@ -115,12 +140,16 @@ function toggleTimer() {
     document.getElementById('startBtn').textContent = 'Pause';
     document.getElementById('endBtn').style.display = '';
 
-    const col = isCoding ? '#fb923c' : '#3dd9c4';
+    const col = isCoding ? '#fb923c' : '#14b8a6';
     const lbl = isCoding ? 'coding...' : 'focusing...';
     document.getElementById('timeStatus').innerHTML =
       '<span class="live-dot pulse" style="background:' + col + '"></span>' + lbl;
 
     timerInt = setInterval(tick, 1000);
+  }
+
+  if (!wasRunning && running) {
+    bgMsg({ type: 'SESSION_START', durationMins: freeMode ? 0 : modeMin, coding: isCoding });
   }
 }
 
@@ -134,7 +163,7 @@ function tick() {
     // Count up
     totalSecs = elapsed;
     document.getElementById('timeDisplay').textContent = fmt(elapsed);
-    document.getElementById('arcFill').style.stroke    = isCoding ? '#fb923c' : '#3dd9c4';
+    document.getElementById('arcFill').style.stroke    = isCoding ? '#fb923c' : '#14b8a6';
     setArc(Math.min(elapsed / 7200, 1)); // max arc at 2 h
   } else {
     // Count down
@@ -263,8 +292,11 @@ function endSession(completed = false) {
   document.getElementById('startBtn').textContent    = 'Start';
   document.getElementById('endBtn').style.display    = 'none';
   document.getElementById('vsPill').style.display    = 'none';
-  document.getElementById('arcFill').style.stroke    = isCoding ? '#fb923c' : '#3dd9c4';
+  document.getElementById('arcFill').style.stroke    = isCoding ? '#fb923c' : '#14b8a6';
   setArc(completed ? 0 : 1);
+
+  bgMsg({ type: 'SESSION_STOP' });
+  saveToStorage();
 }
 
 /* ============================================================
@@ -287,8 +319,8 @@ function updateFocusDisplay(score) {
   bar.style.width = score + '%';
 
   let col, hint;
-  if      (score >= 85) { col = '#3dd9c4'; hint = 'Excellent! You were deeply focused this session.'; }
-  else if (score >= 65) { col = '#7c6ff7'; hint = 'Good focus — only minor distractions.'; }
+  if      (score >= 85) { col = '#14b8a6'; hint = 'Excellent! You were deeply focused this session.'; }
+  else if (score >= 65) { col = '#22d3ee'; hint = 'Good focus — only minor distractions.'; }
   else if (score >= 45) { col = '#fbbf24'; hint = 'Moderate focus. Try to reduce tab switching.'; }
   else                  { col = '#f87171'; hint = 'Low focus. Stay on your work next time!'; }
 
@@ -309,8 +341,8 @@ function renderLog() {
   }
 
   list.innerHTML = sessions.slice(0, 10).map(s => {
-    const col  = s.score >= 85 ? '#3dd9c4'
-               : s.score >= 65 ? '#7c6ff7'
+    const col  = s.score >= 85 ? '#14b8a6'
+           : s.score >= 65 ? '#22d3ee'
                : s.score >= 45 ? '#fbbf24'
                : '#f87171';
 
@@ -392,31 +424,7 @@ function loadFromStorage() {
   }
 }
 
-/* ── Patch toggleTimer to notify background on start ── */
-const _originalToggle = toggleTimer;
-function toggleTimer() {
-  const wasRunning = running;
-  _originalToggle();
-  // Just started
-  if (!wasRunning && running) {
-    bgMsg({ type: 'SESSION_START', durationMins: freeMode ? 0 : modeMin, coding: isCoding });
-  }
-}
-
-/* ── Patch endSession to notify background on stop ── */
-const _originalEnd = endSession;
-function endSession(completed = false) {
-  _originalEnd(completed);
-  bgMsg({ type: 'SESSION_STOP' });
-  saveToStorage();
-}
-
-/* ── Patch resetTimer to notify background on reset ── */
-const _originalReset = resetTimer;
-function resetTimer() {
-  _originalReset();
-  bgMsg({ type: 'SESSION_STOP' });
-}
+/* Background notifications are triggered directly in the timer handlers. */
 
 /* ── Send badge tick every 60 s while running ── */
 setInterval(() => {
@@ -430,5 +438,6 @@ setInterval(() => {
 /* ============================================================
    INIT
    ============================================================ */
+bindUi();
 loadFromStorage();
 resetTimer();
