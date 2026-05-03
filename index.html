@@ -11,72 +11,113 @@
 
   <!-- HEADER -->
   <div class="header">
-    <h1>Study Focus Timer</h1>
-    <p>Track how deeply you focus — study or code</p>
+    <div class="header-inner">
+      <div class="header-icon">🎯</div>
+      <div>
+        <h1>StudyFocus</h1>
+        <p>Deep work, tracked and rewarded</p>
+      </div>
+    </div>
+    <!-- Live Status Bar -->
+    <div class="live-status-bar" id="liveStatusBar">
+      <span class="status-chip" id="chipCompleted">
+        <span class="chip-dot done-dot"></span>
+        <span id="completedCount">0</span> completed
+      </span>
+      <span class="status-divider">·</span>
+      <span class="status-chip" id="chipRunning">
+        <span class="chip-dot running-dot" id="runningDot"></span>
+        <span id="runningStatus">not running</span>
+      </span>
+      <span class="status-divider">·</span>
+      <span class="status-chip">
+        <span class="chip-dot streak-dot"></span>
+        Streak: <span id="headerStreak">0</span>
+      </span>
+    </div>
   </div>
 
   <!-- Tabs -->
   <div class="tab-bar">
-    <button class="tab-btn active" data-tab="timer">Timer</button>
-    <button class="tab-btn" data-tab="profile">Profile</button>
+    <button class="tab-btn active" data-tab="timer">⏱ Timer</button>
+    <button class="tab-btn" data-tab="history">📋 History</button>
+    <button class="tab-btn" data-tab="profile">👤 Profile</button>
   </div>
 
+  <!-- ===== TIMER TAB ===== -->
   <div class="tab-panel active" id="tabTimer">
 
-  <!-- TIMER CARD -->
   <div class="timer-card">
 
     <!-- Subject Input -->
     <div class="subject-wrap">
+      <div class="subject-icon">📚</div>
       <input class="subject-input" id="subjectInput"
-        placeholder="What are you studying? (e.g. Maths, Python, History...)"
+        placeholder="What are you studying today?"
         maxlength="50"/>
     </div>
 
     <!-- Study Mode Pills -->
     <div class="mode-section">
-      <span class="mode-label">Study mode</span>
+      <span class="mode-label">📖 Study Mode</span>
       <div class="mode-pills">
-        <button class="pill active" data-min="25"  data-coding="false">Pomodoro 25m</button>
-        <button class="pill"        data-min="45"  data-coding="false">Deep 45m</button>
-        <button class="pill"        data-min="60"  data-coding="false">1 Hour</button>
-        <button class="pill"        data-min="120" data-coding="false">2 Hours</button>
-        <button class="pill"        data-min="0"   data-coding="false">Free</button>
+        <button class="pill active" data-min="25"  data-coding="false">🍅 25m</button>
+        <button class="pill"        data-min="45"  data-coding="false">🔥 45m</button>
+        <button class="pill"        data-min="60"  data-coding="false">⚡ 1h</button>
+        <button class="pill"        data-min="120" data-coding="false">🏆 2h</button>
+        <button class="pill"        data-min="0"   data-coding="false">∞ Free</button>
       </div>
     </div>
 
     <!-- Coding Mode Pills -->
     <div class="mode-section">
-      <span class="mode-label">Coding mode (VS Code friendly)</span>
+      <span class="mode-label">💻 Coding Mode</span>
       <div class="mode-pills">
-        <button class="pill code-pill" data-min="60"  data-coding="true">Code 1h</button>
-        <button class="pill code-pill" data-min="120" data-coding="true">Code 2h</button>
-        <button class="pill code-pill" data-min="0"   data-coding="true">Code Free</button>
+        <button class="pill code-pill" data-min="60"  data-coding="true">{'>'} 1h</button>
+        <button class="pill code-pill" data-min="120" data-coding="true">{'>'} 2h</button>
+        <button class="pill code-pill" data-min="0"   data-coding="true">{'>'} Free</button>
       </div>
     </div>
 
     <!-- Clock -->
-    <div class="clock-area">
-      <svg class="clock-svg" width="210" height="210" viewBox="0 0 210 210">
-        <circle class="arc-bg"   cx="105" cy="105" r="92"/>
-        <circle class="arc-fill" cx="105" cy="105" r="92" id="arcFill"
+    <div class="clock-area" id="clockArea">
+      <svg class="clock-svg" width="220" height="220" viewBox="0 0 220 220">
+        <defs>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        <circle class="arc-bg"   cx="110" cy="110" r="96"/>
+        <circle class="arc-fill" cx="110" cy="110" r="96" id="arcFill"
           stroke="#14b8a6"
-          stroke-dasharray="578.05"
-          stroke-dashoffset="0"/>
+          stroke-dasharray="603.19"
+          stroke-dashoffset="0"
+          filter="url(#glow)"/>
+        <!-- Tick marks -->
+        <g id="tickMarks"></g>
       </svg>
       <div class="clock-center">
         <div class="time-big"    id="timeDisplay">25:00</div>
         <div class="time-status" id="timeStatus">ready</div>
         <div class="vs-pill"     id="vsPill">VS Code</div>
       </div>
+      <!-- Celebration ring -->
+      <div class="celebrate-ring" id="celebrateRing"></div>
     </div>
 
     <!-- Controls -->
     <div class="controls">
-      <button class="btn btn-start" id="startBtn">Start</button>
-      <button class="btn btn-reset" id="resetBtn">Reset</button>
-      <button class="btn btn-end"   id="endBtn">End Session</button>
+      <button class="btn btn-start" id="startBtn">▶ Start</button>
+      <button class="btn btn-reset" id="resetBtn">↺ Reset</button>
+      <button class="btn btn-end"   id="endBtn">■ End</button>
     </div>
+
+    <!-- Keyboard hint -->
+    <div class="keyboard-hint">Press <kbd>Space</kbd> to start/pause · <kbd>R</kbd> to reset</div>
 
   </div><!-- /timer-card -->
 
@@ -85,26 +126,41 @@
     <div class="vs-icon">VS</div>
     <div class="vs-text">
       <strong>VS Code switch detected!</strong><br>
-      You left the browser — great, keep coding! This won't hurt your focus score.
+      Keep coding! This won't hurt your focus score.
     </div>
   </div>
 
   <!-- Coding Tip -->
   <div class="coding-tip" id="codingTip">
-    <b>Coding mode active:</b> Switching to VS Code is
-    <span class="allowed-text">allowed</span>
-    and won't lower your score. Only random distractions (social media, YouTube) count against you.
+    <b>💻 Coding mode:</b> Switching to VS Code is
+    <span class="allowed-text">✓ allowed</span>
+    and won't lower your score.
+  </div>
+
+  <!-- Daily Progress -->
+  <div class="daily-card" id="dailyCard">
+    <div class="daily-header">
+      <span class="daily-label">Today's Progress</span>
+      <span class="daily-val" id="dailyVal">0 / — min</span>
+    </div>
+    <div class="daily-track">
+      <div class="daily-fill" id="dailyFill" style="width:0%"></div>
+    </div>
   </div>
 
   <!-- Stats -->
   <div class="stats-row">
     <div class="stat-box">
       <div class="stat-val accent" id="statSessions">0</div>
-      <div class="stat-lbl">Sessions</div>
+      <div class="stat-lbl">Total</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val green" id="statCompleted">0</div>
+      <div class="stat-lbl">✓ Done</div>
     </div>
     <div class="stat-box">
       <div class="stat-val teal" id="statTotal">0m</div>
-      <div class="stat-lbl">Total</div>
+      <div class="stat-lbl">Focused</div>
     </div>
     <div class="stat-box">
       <div class="stat-val orange" id="statCode">0m</div>
@@ -112,7 +168,7 @@
     </div>
     <div class="stat-box">
       <div class="stat-val amber" id="statStreak">0</div>
-      <div class="stat-lbl">Streak</div>
+      <div class="stat-lbl">🔥 Streak</div>
     </div>
   </div>
 
@@ -131,9 +187,12 @@
     <div class="focus-hint" id="focusHint">Complete a session to see your focus score</div>
   </div>
 
-  <!-- Session Log -->
+  <!-- Recent Sessions (mini) -->
   <div class="log-card">
-    <div class="log-title">Session Log</div>
+    <div class="log-header">
+      <div class="log-title">Recent Sessions</div>
+      <button class="log-see-all" id="seeAllBtn">See all →</button>
+    </div>
     <div id="logList">
       <div class="empty">No sessions yet — start your first one!</div>
     </div>
@@ -141,15 +200,58 @@
 
   </div><!-- /tabTimer -->
 
+  <!-- ===== HISTORY TAB ===== -->
+  <div class="tab-panel" id="tabHistory">
+
+  <!-- Summary Banner -->
+  <div class="history-banner">
+    <div class="hb-box">
+      <div class="hb-num" id="hbTotal">0</div>
+      <div class="hb-lbl">All Sessions</div>
+    </div>
+    <div class="hb-box hb-green">
+      <div class="hb-num" id="hbCompleted">0</div>
+      <div class="hb-lbl">✓ Completed</div>
+    </div>
+    <div class="hb-box hb-amber">
+      <div class="hb-num" id="hbIncomplete">0</div>
+      <div class="hb-lbl">◑ Incomplete</div>
+    </div>
+    <div class="hb-box hb-teal">
+      <div class="hb-num" id="hbTotalMins">0m</div>
+      <div class="hb-lbl">Total Time</div>
+    </div>
+  </div>
+
+  <!-- Filter -->
+  <div class="filter-row">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="completed">✓ Completed</button>
+    <button class="filter-btn" data-filter="incomplete">◑ Incomplete</button>
+    <button class="filter-btn" data-filter="coding">💻 Coding</button>
+  </div>
+
+  <!-- Full Log -->
+  <div class="log-card">
+    <div id="fullLogList">
+      <div class="empty">No sessions yet</div>
+    </div>
+  </div>
+
+  <!-- Clear History -->
+  <button class="btn btn-clear" id="clearHistoryBtn">🗑 Clear All History</button>
+
+  </div><!-- /tabHistory -->
+
+  <!-- ===== PROFILE TAB ===== -->
   <div class="tab-panel" id="tabProfile">
 
-  <!-- Student Profile -->
   <div class="profile-card">
     <div class="profile-title">Student Profile</div>
     <div class="profile-grid">
       <div class="profile-field">
         <label class="profile-label" for="studentName">Name</label>
-        <input class="profile-input" id="studentName" placeholder="Student name" maxlength="40"/>
+        <input class="profile-input" id="studentName" placeholder="Your name" maxlength="40"/>
       </div>
       <div class="profile-field">
         <label class="profile-label" for="studentClass">Class/Grade</label>
@@ -161,26 +263,25 @@
       </div>
       <div class="profile-field">
         <label class="profile-label" for="studentSubjects">Subjects</label>
-        <input class="profile-input" id="studentSubjects" placeholder="Comma separated subjects" maxlength="120"/>
+        <input class="profile-input" id="studentSubjects" placeholder="Maths, Physics, CS..." maxlength="120"/>
       </div>
       <div class="profile-field">
-        <label class="profile-label" for="targetDaily">Target (min/day)</label>
+        <label class="profile-label" for="targetDaily">Daily Target (min)</label>
         <input class="profile-input" id="targetDaily" type="number" min="0" max="1440" placeholder="e.g. 120"/>
       </div>
       <div class="profile-field">
-        <label class="profile-label" for="targetWeekly">Target (min/week)</label>
+        <label class="profile-label" for="targetWeekly">Weekly Target (min)</label>
         <input class="profile-input" id="targetWeekly" type="number" min="0" max="10080" placeholder="e.g. 600"/>
       </div>
     </div>
     <div class="profile-actions">
-      <button class="btn btn-save" id="saveProfileBtn">Save Profile</button>
+      <button class="btn btn-save" id="saveProfileBtn">💾 Save Profile</button>
       <div class="profile-status" id="profileStatus">Not saved yet</div>
     </div>
   </div>
 
-  <!-- Student Analysis -->
   <div class="analysis-card">
-    <div class="analysis-title">Student Analysis</div>
+    <div class="analysis-title">Performance Analysis</div>
     <div class="analysis-sub" id="analysisStudent">Add a profile to see analysis</div>
     <div class="analysis-grid">
       <div class="analysis-box">
@@ -192,16 +293,20 @@
         <div class="analysis-value" id="analysisAvg">—</div>
       </div>
       <div class="analysis-box">
-        <div class="analysis-label">Focused</div>
-        <div class="analysis-value" id="analysisFocused">0</div>
+        <div class="analysis-label">🟢 Focused</div>
+        <div class="analysis-value teal" id="analysisFocused">0</div>
       </div>
       <div class="analysis-box">
-        <div class="analysis-label">Distracted</div>
-        <div class="analysis-value" id="analysisDistracted">0</div>
+        <div class="analysis-label">🟡 Distracted</div>
+        <div class="analysis-value amber" id="analysisDistracted">0</div>
       </div>
       <div class="analysis-box">
-        <div class="analysis-label">Unfocused</div>
-        <div class="analysis-value" id="analysisUnfocused">0</div>
+        <div class="analysis-label">🔴 Unfocused</div>
+        <div class="analysis-value red" id="analysisUnfocused">0</div>
+      </div>
+      <div class="analysis-box">
+        <div class="analysis-label">Best Streak</div>
+        <div class="analysis-value orange" id="analysisBestStreak">0</div>
       </div>
     </div>
   </div>
@@ -209,6 +314,22 @@
   </div><!-- /tabProfile -->
 
 </div><!-- /container -->
+
+<!-- Completion Modal -->
+<div class="modal-overlay" id="completionModal">
+  <div class="modal-box">
+    <div class="modal-emoji" id="modalEmoji">🎉</div>
+    <h2 class="modal-title" id="modalTitle">Session Complete!</h2>
+    <p class="modal-sub" id="modalSub">You stayed focused and crushed it.</p>
+    <div class="modal-score-wrap">
+      <div class="modal-score" id="modalScore">—</div>
+      <div class="modal-score-lbl">Focus Score</div>
+    </div>
+    <div class="modal-stats" id="modalStats"></div>
+    <button class="btn btn-start modal-ok" id="modalOkBtn">🚀 Continue</button>
+  </div>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>
